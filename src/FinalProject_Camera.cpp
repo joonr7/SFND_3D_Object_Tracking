@@ -140,7 +140,7 @@ int main(int argc, const char *argv[])
         
         
         // REMOVE THIS LINE BEFORE PROCEEDING WITH THE FINAL PROJECT
-        continue; // skips directly to the next image without processing what comes beneath
+        // continue; // skips directly to the next image without processing what comes beneath
 
         /* DETECT IMAGE KEYPOINTS */
 
@@ -156,9 +156,30 @@ int main(int argc, const char *argv[])
         {
             detKeypointsShiTomasi(keypoints, imgGray, false);
         }
+        else if(detectorType.compare("HARRIS") == 0)
+        {
+            detKeypointsHarris(keypoints, imgGray, false);
+        }
         else
         {
-            //...
+            detKeypointsModern(keypoints, imgGray, detectorType, false);
+        }
+
+        // only keep keypoints on the preceding vehicle
+        bool bFocusOnVehicle = true;
+        cv::Rect vehicleRect(535, 180, 180, 150);
+        if (bFocusOnVehicle)
+        {
+            vector<cv::KeyPoint> croppedKeypoints;
+            for(std::vector<cv::KeyPoint>::iterator it = keypoints.begin(); it!= keypoints.end(); it++)
+            {
+                if(vehicleRect.contains(it->pt))
+                {
+                    croppedKeypoints.push_back(*it);
+                }
+            }
+            keypoints = croppedKeypoints;
+            cout << keypoints.size() << " keypoints after cropping." << endl;
         }
 
         // optional : limit number of keypoints (helpful for debugging and learning)
@@ -207,8 +228,11 @@ int main(int argc, const char *argv[])
                              (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
                              matches, descriptorType, matcherType, selectorType);
 
+            cout << matches.size() << " keypoints are matched." << endl;
+            
             // store matches in current data frame
             (dataBuffer.end() - 1)->kptMatches = matches;
+            
 
             cout << "#7 : MATCH KEYPOINT DESCRIPTORS done" << endl;
 

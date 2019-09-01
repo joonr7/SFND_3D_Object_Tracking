@@ -158,5 +158,70 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
-    std::cout << matches.size() << std::endl;
+    std::cout << "Matches size: " << matches.size() << std::endl;
+    std::cout << "# of previous frame bounding boxes: " << prevFrame.boundingBoxes.size() << std::endl;
+    std::cout << "# of current frame bounding boxes: " << currFrame.boundingBoxes.size() << std::endl;
+    
+    std::vector < std::vector <int> > roiMatchingPoint;
+    for(int i = 0; i < currFrame.boundingBoxes.size(); i++)
+    {
+        std::vector<int> v;
+        for(int j=0; j < prevFrame.boundingBoxes.size(); j++)
+        {
+            v.push_back(0);
+        }
+        roiMatchingPoint.push_back(v);
+    }
+    // Now, roiMatchingPoint size: (Num of BB in Curr, Num of BB in Prev)
+    std::cout << "ROI matching point vector size: " << roiMatchingPoint.size() << ", " << roiMatchingPoint[0].size() << std::endl;
+    int failCounter = 0; // counter for kpts that are not included in both curr ROI and prev ROI
+    bool assignFlag = false;
+
+    for(auto it = matches.begin();it != matches.end(); ++it)
+    {
+        for(int i = 0; i < roiMatchingPoint.size(); i++)
+        {
+            if(currFrame.boundingBoxes[i].roi.contains(currFrame.keypoints[it->queryIdx].pt))
+            {
+                for(int j = 0; j < roiMatchingPoint[0].size(); j++)
+                {
+                    if(prevFrame.boundingBoxes[j].roi.contains(prevFrame.keypoints[it->trainIdx].pt))
+                    {
+                        roiMatchingPoint[i][j] += 1;
+                        assignFlag = true;
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        if(!assignFlag){
+            failCounter += 1;
+        }
+        else
+        {
+            assignFlag = false;
+        }
+    }
+    std::cout << "ROI Matching Point Vecor: " << std::endl;
+    int sum = 0;
+    for(int i = 0; i < roiMatchingPoint.size(); i++)
+    {
+        for(int j = 0; j < roiMatchingPoint[0].size(); j++)
+        {
+            sum += roiMatchingPoint[i][j];
+            std::cout << roiMatchingPoint[i][j] <<"\t";
+        }
+        // auto minmax = std::minmax_element(roiMatchingPoint[i].begin(), roiMatchingPoint[i].end());
+        std::cout << "\tMax: " << std::distance(roiMatchingPoint[i].begin(), std::max_element(roiMatchingPoint[i].begin(), roiMatchingPoint[i].end())) << std::endl;
+    }
+    std::cout << "SUM: " << sum << ", failcounter" << failCounter << " --> " << sum + failCounter << std::endl;
+
+    // currFrame.boundingBoxes.roi.contains(pt);
+    // for (auto it = matches.begin();it != matches.end(); ++it){
+    //     counter++;
+    //     std::cout << counter << " train index: " << it->trainIdx << ", query index: " << it->queryIdx << ", image index: " << it->imgIdx << std::endl
+    // }
+    // std::cout << "train index: " << matches[0].trainIdx << ", query index: " << matches[0].queryIdx << ", image index: " << matches[0].imgIdx << std::endl;
+    
 }
