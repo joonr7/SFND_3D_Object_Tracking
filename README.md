@@ -29,7 +29,20 @@ In this final project, you will implement the missing parts in the schematic. To
 
 ## Basic Build Instructions
 
-1. Clone this repo.
-2. Make a build directory in the top level project directory: `mkdir build && cd build`
-3. Compile: `cmake .. && make`
-4. Run it: `./3D_object_tracking`.
+### 1. Clone this repo.
+`git clone https://github.com/joonr7/SFND_3D_Object_Tracking.git`
+
+### 2. YOLO configurations
+
+The file 'yolov3.weights' contains the pre-trained network’s weights and has been made available by the authors of YOLO [here](https://pjreddie.com/media/files/yolov3.weights).
+
+The file 'yolov3.cfg' containing the network configuration is available [here](https://github.com/pjreddie/darknet/blob/master/cfg/yolov3.cfg) and the coco.names file which contains the 80 different class names used in the COCO dataset can be downloaded [here](https://github.com/pjreddie/darknet/blob/master/data/coco.names).
+<br>
+1. Make a yolo data directory `mkdir -p dat/yolo`
+2. Move `coco.names`, `yolov3.cfg`, `yolov3-tiny.cfg`, `yolov3-tiny.weights` and `yolov3.weights` into  `dat/yolo` directory.
+
+### 3. Build && run
+
+1. Make a build directory in the top level project directory: `mkdir build && cd build`
+2. Compile: `cmake .. && make`
+3. Run it: `./3D_object_tracking`.
