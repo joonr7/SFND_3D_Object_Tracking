@@ -137,7 +137,7 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 // associate a given bounding box with the keypoints it contains
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
 {
-    // ...
+    
 }
 
 
@@ -152,7 +152,50 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
                      std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {
-    // ...
+    float laneWidth = 4.0;
+    float xminPrev=1e8, xminCurr=1e8;
+    float xsumPrev = 0, xsumCurr = 0;
+    int counterPrev = 0, counterCurr =0 ;
+    for(auto it1 = lidarPointsPrev.begin(); it1 != lidarPointsPrev.end(); ++it1)
+    {
+        // ego line? 
+        if (abs(it1->y) <= laneWidth / 2.0)
+        {
+            xminPrev = xminPrev < it1->x ? xminPrev : it1->x;
+            xsumPrev += it1->x;
+            counterPrev ++;
+        }     
+    }    
+    for(auto it2 = lidarPointsCurr.begin(); it2 != lidarPointsCurr.end(); ++it2)
+    {
+        // ego line? 
+        if (abs(it2->y) <= laneWidth / 2.0)
+        {
+            xminCurr = xminCurr < it2->x ? xminCurr : it2->x;
+            xsumCurr += it2->x;
+            counterCurr ++;
+        }
+    }
+
+    // float xavePrev = xsumPrev / lidarPointsPrev.size();
+    // float xaveCurr = xsumCurr / lidarPointsCurr.size();
+    float xavePrev = xsumPrev / counterPrev;
+    float xaveCurr = xsumCurr / counterCurr;
+
+    cout << "xminPrev: " << xminPrev << ", xavePrev: " << xavePrev << endl;
+    cout << "xminCurr: " << xminCurr << ", xaveCurr: " << xaveCurr << endl; 
+
+    float xdistPrev = xavePrev;
+    float xdistCurr = xaveCurr;
+
+    cout << "Pointcloud size: prev: " << lidarPointsPrev.size() << ", " << counterPrev << ", curr: " << lidarPointsCurr.size() << ", " << counterCurr << endl;
+    cout <<  "xdistPrev: " << xdistPrev << ", xdistCurr: " << xdistCurr << ", deltaD: " << xdistPrev - xdistCurr << endl;
+    float velocityCurr = (xdistPrev - xdistCurr) * frameRate;
+    TTC = xminCurr / velocityCurr;
+    cout << "xdistCurr: " << xdistCurr << ", velocityCurr: " << velocityCurr << ", TTC" << TTC << endl;
+
+    // vector<float> distRatios;
+    // double meanDistRatio = std::accumulate()
 }
 
 
