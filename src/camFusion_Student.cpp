@@ -157,9 +157,9 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
         }
     }
 
-    cout << "after lidar pt size: " << boundingBox.lidarPoints.size() << endl;
-    cout << "after kpts size: " << boundingBox.keypoints.size() << endl; 
-    cout << "after kpt matches size: " << boundingBox.kptMatches.size() << endl;
+    // cout << "after lidar pt size: " << boundingBox.lidarPoints.size() << endl;
+    // cout << "after kpts size: " << boundingBox.keypoints.size() << endl; 
+    // cout << "after kpt matches size: " << boundingBox.kptMatches.size() << endl;
     
     // cf>
     // cv::DMatch.queryIdx: index of prev kpts
@@ -169,13 +169,86 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
 }
 
 
+double median(vector<double> &v)
+{
+    std::sort(v.begin(), v.end());
+    size_t n = v.size() / 2;
+    nth_element(v.begin(), v.begin()+n, v.end());
+    // cout << "n:" << n << endl;
+    // cout << "value: " << v[n] << endl;
+    return v[n];
+}
+
+
 // Compute time-to-collision (TTC) based on keypoint correspondences in successive images
 void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, 
                       std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
 {
+    // compute distance ratios between all matched keypoints
+    vector<double> distRatios; // stores the distance ratios for all keypoints between curr. and prev. frame
+    for (auto it1 = kptMatches.begin(); it1 != kptMatches.end() - 1; ++it1)
+    {// outer kpt. loop
 
-    // TTC = 1;
+        // get current keypoint and its matched partner in the prev. frame
+        cv::KeyPoint kpOuterCurr = kptsCurr.at(it1->trainIdx);
+        cv::KeyPoint kpOuterPrev = kptsPrev.at(it1->queryIdx);
+
+        for (auto it2 = kptMatches.begin() + 1; it2 != kptMatches.end(); ++it2)
+        {// inner kpt.-loop
+
+            double minDist = 100.0; // min. required distance
+
+            // get next keypoint and its matched partner in the prev. frame
+            cv::KeyPoint kpInnerCurr = kptsCurr.at(it2->trainIdx);
+            cv::KeyPoint kpInnerPrev = kptsPrev.at(it2->queryIdx);
+
+            // compute distances and distance ratios
+            double distCurr = cv::norm(kpOuterCurr.pt - kpInnerCurr.pt);
+            double distPrev = cv::norm(kpOuterPrev.pt - kpInnerPrev.pt);
+
+            if (distPrev > std::numeric_limits<double>::epsilon() && distCurr >= minDist)
+            { // avoid division by zero
+
+                double distRatio = distCurr / distPrev;
+                distRatios.push_back(distRatio);
+            }
+        } // eof inner loop over all matched kpts
+    }     // eof outer loop over all matched kpts
+
+    // only continue if list of distance ratios is not empty
+    if (distRatios.size() == 0)
+    {
+        TTC = NAN;
+        return;
+    }
+
+    
+    double dT = 1 / frameRate;
+    
+    // compute camera-based TTC from distance ratios
+    // Mean
+    // double meanDistRatio = std::accumulate(distRatios.begin(), distRatios.end(), 0.0) / distRatios.size();
+    // TTC = -dT / (1 - meanDistRatio);
+
+    // median
+    // STUDENT TASK (replacement for meanDistRatio)
+    // solution by joonyoung
+    double medianDistRatio = median(distRatios);
+    TTC = -dT / (1 - medianDistRatio);
+    // cout << "dT: " << dT << ", 1-meanDistRatio: " << 1-meanDistRatio << ", 1-medianDistRatio: " <<  1-medianDistRatio <<endl;
+
+    // Solution below.
+    // std::sort(distRatios.begin(), distRatios.end());
+    // long medIndex = floor(distRatios.size() / 2.0);
+    // double medDistRatio = distRatios.size() % 2 == 0 ? (distRatios[medIndex - 1] + distRatios[medIndex]) / 2.0 : distRatios[medIndex]; // compute median dist. ratio to remove outlier influence
+    
+    // dT = 1 / frameRate;
+    // TTC = -dT / (1 - medDistRatio);
+    // cout << "medIndex: " << medIndex << endl;
+    // cout << "medDistRatio: " << medDistRatio << endl;
+    // cout << "TTC: " << TTC << endl;
 }
+
 
 
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
@@ -184,7 +257,9 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     float laneWidth = 4.0;
     float xminPrev=1e8, xminCurr=1e8;
     float xsumPrev = 0, xsumCurr = 0;
-    int counterPrev = 0, counterCurr =0 ;
+    int counterPrev = 0, counterCurr = 0;
+    std::vector<double> xPrev, xCurr;
+
     for(auto it1 = lidarPointsPrev.begin(); it1 != lidarPointsPrev.end(); ++it1)
     {
         // ego line? 
@@ -192,6 +267,7 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
         {
             xminPrev = xminPrev < it1->x ? xminPrev : it1->x;
             xsumPrev += it1->x;
+            xPrev.push_back(it1->x);
             counterPrev ++;
         }     
     }    
@@ -202,6 +278,7 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
         {
             xminCurr = xminCurr < it2->x ? xminCurr : it2->x;
             xsumCurr += it2->x;
+            xCurr.push_back(it2->x);
             counterCurr ++;
         }
     }
@@ -211,11 +288,11 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     float xavePrev = xsumPrev / counterPrev;
     float xaveCurr = xsumCurr / counterCurr;
 
-    cout << "xminPrev: " << xminPrev << ", xavePrev: " << xavePrev << endl;
-    cout << "xminCurr: " << xminCurr << ", xaveCurr: " << xaveCurr << endl; 
+    cout << "xminPrev: " << xminPrev << ", xavePrev: " << xavePrev << ", xPrevMedian: " << median(xPrev) << endl;
+    cout << "xminCurr: " << xminCurr << ", xaveCurr: " << xaveCurr << ", xCurrMedian: " << median(xCurr) << endl; 
 
-    float xdistPrev = xavePrev;
-    float xdistCurr = xaveCurr;
+    float xdistPrev = median(xPrev);
+    float xdistCurr = median(xCurr);
 
     cout << "Pointcloud size: prev: " << lidarPointsPrev.size() << ", " << counterPrev << ", curr: " << lidarPointsCurr.size() << ", " << counterCurr << endl;
     cout <<  "xdistPrev: " << xdistPrev << ", xdistCurr: " << xdistCurr << ", deltaD: " << xdistPrev - xdistCurr << endl;
