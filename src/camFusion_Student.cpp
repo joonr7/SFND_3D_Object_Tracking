@@ -137,7 +137,26 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 // associate a given bounding box with the keypoints it contains
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
 {
+    for(auto it=kptMatches.begin(); it!=kptMatches.end(); it++)
+    {
+        // if boundingBox.roi.contains(current Kpts)?
+        if(boundingBox.roi.contains(kptsCurr[it->trainIdx].pt))
+        {
+            // yes: push_back.
+            boundingBox.keypoints.push_back(kptsCurr[it->trainIdx]);
+            boundingBox.kptMatches.push_back(*it);
+        }
+    }
+
+    // cout << "after lidar pt size: " << boundingBox.lidarPoints.size() << endl;
+    // cout << "after kpts size: " << boundingBox.keypoints.size() << endl; 
+    // cout << "after kpt matches size: " << boundingBox.kptMatches.size() << endl;
     
+    // cf>
+    // cv::DMatch.queryIdx: index of prev kpts
+    // cv::DMatch.trainIdx: index of curr kpts.
+    // keypoint.pt = cv::Point2f((*it).x, (*it).y);
+
 }
 
 
@@ -229,6 +248,7 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
     // // Now, roiMatchingPoint size: (Num of BB in Curr, Num of BB in Prev)
     // std::cout << "ROI matching point vector size: " << roiMatchingPoint.size() << ", " << roiMatchingPoint[0].size() << std::endl;
      
+    // matches->queryIdx: index of prev kpts, matches->trainIdx: index of curr kpts.
     for(auto it = matches.begin();it != matches.end(); ++it)
     {
         for(int i = 0; i < roiMatchingPoint.size(); i++)
