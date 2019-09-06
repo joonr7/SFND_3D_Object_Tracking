@@ -137,10 +137,19 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 // associate a given bounding box with the keypoints it contains
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
 {
+    double shrinkFactor = 0.1;
     for(auto it=kptMatches.begin(); it!=kptMatches.end(); it++)
     {
-        // if boundingBox.roi.contains(current Kpts)?
-        if(boundingBox.roi.contains(kptsCurr[it->trainIdx].pt))
+        
+        // shrink current bounding box slightly to avoid having too many outlier points around the edges
+        cv::Rect smallerBox;
+        smallerBox.x = boundingBox.roi.x + shrinkFactor * boundingBox.roi.width / 2.0;
+        smallerBox.y = boundingBox.roi.y + shrinkFactor * boundingBox.roi.height / 2.0;
+        smallerBox.width = boundingBox.roi.width * (1 - shrinkFactor);
+        smallerBox.height = boundingBox.roi.height * (1 - shrinkFactor);
+        
+        // if smallerBox.contains(current Kpts)?
+        if(smallerBox.contains(kptsCurr[it->trainIdx].pt))
         {
             // yes: push_back.
             boundingBox.keypoints.push_back(kptsCurr[it->trainIdx]);
@@ -148,9 +157,9 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
         }
     }
 
-    // cout << "after lidar pt size: " << boundingBox.lidarPoints.size() << endl;
-    // cout << "after kpts size: " << boundingBox.keypoints.size() << endl; 
-    // cout << "after kpt matches size: " << boundingBox.kptMatches.size() << endl;
+    cout << "after lidar pt size: " << boundingBox.lidarPoints.size() << endl;
+    cout << "after kpts size: " << boundingBox.keypoints.size() << endl; 
+    cout << "after kpt matches size: " << boundingBox.kptMatches.size() << endl;
     
     // cf>
     // cv::DMatch.queryIdx: index of prev kpts
@@ -164,7 +173,8 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
 void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, 
                       std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
 {
-    // ...
+
+    // TTC = 1;
 }
 
 
@@ -211,7 +221,7 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     cout <<  "xdistPrev: " << xdistPrev << ", xdistCurr: " << xdistCurr << ", deltaD: " << xdistPrev - xdistCurr << endl;
     float velocityCurr = (xdistPrev - xdistCurr) * frameRate;
     TTC = xminCurr / velocityCurr;
-    cout << "xdistCurr: " << xdistCurr << ", velocityCurr: " << velocityCurr << ", TTC" << TTC << endl;
+    cout << "xdistCurr: " << xdistCurr << ", velocityCurr: " << velocityCurr << ", TTC: " << TTC << endl;
 
     // vector<float> distRatios;
     // double meanDistRatio = std::accumulate()
