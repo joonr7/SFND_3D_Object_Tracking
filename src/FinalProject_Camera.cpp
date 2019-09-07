@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <string>
 #include <iomanip>
 #include <vector>
 #include <cmath>
@@ -25,8 +26,52 @@ using namespace std;
 /* MAIN PROGRAM */
 int main(int argc, const char *argv[])
 {
-    /* INIT VARIABLES AND DATA STRUCTURES */
+    // Default Types for kpts detector and descriptor
+    string detectorType = "FAST"; //// -> HARRIS, FAST, BRISK, ORB, AKAZE, SIFT default: SHITOMASI
+    string descriptorType = "ORB"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT 
+    string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
+    string descriptorType2 = "DES_BINARY"; // DES_BINARY, DES_HOG
+    string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
+    
+    std::vector<string> detectorTypeList    {"SHITOMASSI", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE", "SIFT"};
+    std::vector<string> descriptorTypeList  {"BRISK", "BRIEF", "ORB", "FREAK", "AKAZE", "SITF"};
+    std::vector<string> matcherTypeList     {"MAT_BF", "MAT_FLANN"};
+    
+    if (argc == 3){
+        if(std::count(detectorTypeList.begin(), detectorTypeList.end(), argv[1]) 
+        && std::count(descriptorTypeList.begin(), descriptorTypeList.end(), argv[2]))
+        {
+            detectorType = argv[1];
+            descriptorType = argv[2];
+        }
+        else
+        {
+            cout << "Err: (detector, descriptor) type error" <<endl;
+            exit(1);
+        }
+    }
+    else if (argc == 4){
+        if(std::count(detectorTypeList.begin(), detectorTypeList.end(), argv[1]) 
+        && std::count(descriptorTypeList.begin(), descriptorTypeList.end(), argv[2])
+        && std::count(matcherTypeList.begin(), matcherTypeList.end(), argv[3]))
+        {
+            detectorType = argv[1];
+            descriptorType = argv[2];
+            matcherType = argv[3];
+        }
+        else
+        {
+            cout << "Err: (detector, descriptor, matcher) type error" <<endl;
+            exit(1);
+        }
+    }
 
+    // make log files
+    ofstream lidarOut("LidarTTC.txt");
+    // ofstream lidarOut("LidarTTC_"+detectorType+"_"+descriptorType+".txt");
+    ofstream cameraOut("CameraTTC_"+detectorType+"_"+descriptorType+".txt");
+
+    /* INIT VARIABLES AND DATA STRUCTURES */
     // data location
     string dataPath = "../";
 
@@ -73,6 +118,7 @@ int main(int argc, const char *argv[])
     int dataBufferSize = 2;       // no. of images which are held in memory (ring buffer) at the same time
     vector<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
     bool bVis = false;            // visualize results
+
 
     /* MAIN LOOP OVER ALL IMAGES */
 
@@ -129,7 +175,7 @@ int main(int argc, const char *argv[])
         clusterLidarWithROI((dataBuffer.end()-1)->boundingBoxes, (dataBuffer.end() - 1)->lidarPoints, shrinkFactor, P_rect_00, R_rect_00, RT);
 
         // Visualize 3D objects
-        bVis = true;
+        bVis = false;
         if(bVis)
         {
             show3DObjects((dataBuffer.end()-1)->boundingBoxes, cv::Size(4.0, 20.0), cv::Size(700, 700), true); // window size default: cv::Size(2000,2000)
@@ -150,7 +196,7 @@ int main(int argc, const char *argv[])
 
         // extract 2D keypoints from current image
         vector<cv::KeyPoint> keypoints; // create empty feature list for current image
-        string detectorType = "FAST"; //// -> HARRIS, FAST, BRISK, ORB, AKAZE, SIFT default: SHITOMASI
+        // string detectorType = "FAST"; //// -> HARRIS, FAST, BRISK, ORB, AKAZE, SIFT default: SHITOMASI
 
         if (detectorType.compare("SHITOMASI") == 0)
         {
@@ -205,7 +251,7 @@ int main(int argc, const char *argv[])
         /* EXTRACT KEYPOINT DESCRIPTORS */
 
         cv::Mat descriptors;
-        string descriptorType = "ORB"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT 
+        // string descriptorType = "ORB"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT 
         descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType);
 
         // push descriptors for current frame to end of data buffer
@@ -220,15 +266,15 @@ int main(int argc, const char *argv[])
             /* MATCH KEYPOINT DESCRIPTORS */
 
             vector<cv::DMatch> matches;
-            string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
-            string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
-            string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
+            // string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
+            // string descriptorType2 = "DES_BINARY"; // DES_BINARY, DES_HOG
+            // string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
 
             matchDescriptors((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
                              (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
-                             matches, descriptorType, matcherType, selectorType);
+                             matches, descriptorType2, matcherType, selectorType);
 
-            cout << matches.size() << " keypoints are matched." << endl;
+            // cout << matches.size() << " keypoints are matched." << endl;
             
             // store matches in current data frame
             (dataBuffer.end() - 1)->kptMatches = matches;
@@ -298,10 +344,12 @@ int main(int argc, const char *argv[])
                 // compute TTC for current match
                 if( currBB->lidarPoints.size()>0 && prevBB->lidarPoints.size()>0 ) // only compute TTC if we have Lidar points
                 {
+                    
                     //// STUDENT ASSIGNMENT
                     //// TASK FP.2 -> compute time-to-collision based on Lidar data (implement -> computeTTCLidar)
                     double ttcLidar; 
                     computeTTCLidar(prevBB->lidarPoints, currBB->lidarPoints, sensorFrameRate, ttcLidar);
+                    lidarOut << ttcLidar << endl;
                     //// EOF STUDENT ASSIGNMENT
 
                     //// STUDENT ASSIGNMENT
@@ -310,9 +358,10 @@ int main(int argc, const char *argv[])
                     double ttcCamera;
                     clusterKptMatchesWithROI(*currBB, (dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->kptMatches);                    
                     computeTTCCamera((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera);
+                    cameraOut << ttcCamera << endl;
                     //// EOF STUDENT ASSIGNMENT
 
-                    bVis = true;
+                    bVis = false;
                     if (bVis)
                     {
                         cv::Mat visImg = (dataBuffer.end() - 1)->cameraImg.clone();
@@ -332,11 +381,14 @@ int main(int argc, const char *argv[])
                     bVis = false;
 
                 } // eof TTC computation
-            } // eof loop over all BB matches            
+            } // eof loop over all BB matches  
+                      
 
         }
 
     } // eof loop over all images
+    lidarOut.close();
+    cameraOut.close();
 
     return 0;
 }

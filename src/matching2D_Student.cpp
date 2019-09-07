@@ -14,11 +14,17 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::Key
 
     if (matcherType.compare("MAT_BF") == 0)
     {
-        int normType = cv::NORM_HAMMING;
+        int normType = descriptorType.compare("DES_BINARY") == 0 ? cv::NORM_HAMMING : cv::NORM_L2;
         matcher = cv::BFMatcher::create(normType, crossCheck);
     }
     else if (matcherType.compare("MAT_FLANN") == 0)
     {
+        if (descSource.type() != CV_32F)
+        { // OpenCV bug workaround : convert binary descriptors to floating point due to a bug in current OpenCV implementation
+            descSource.convertTo(descSource, CV_32F);
+            descRef.convertTo(descRef, CV_32F);
+        }
+
         // FLANN matcher should be used with SIFT detector and SIFT descriptor.
         // ref: https://docs.opencv.org/4.1.1/d5/d6f/tutorial_feature_flann_matcher.html
         // matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);

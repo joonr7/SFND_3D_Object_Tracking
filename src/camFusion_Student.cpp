@@ -131,6 +131,7 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
     {
         cv::waitKey(0); // wait for key to be pressed
     }
+    
 }
 
 
@@ -288,17 +289,17 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     float xavePrev = xsumPrev / counterPrev;
     float xaveCurr = xsumCurr / counterCurr;
 
-    cout << "xminPrev: " << xminPrev << ", xavePrev: " << xavePrev << ", xPrevMedian: " << median(xPrev) << endl;
-    cout << "xminCurr: " << xminCurr << ", xaveCurr: " << xaveCurr << ", xCurrMedian: " << median(xCurr) << endl; 
+    // cout << "xminPrev: " << xminPrev << ", xavePrev: " << xavePrev << ", xPrevMedian: " << median(xPrev) << endl;
+    // cout << "xminCurr: " << xminCurr << ", xaveCurr: " << xaveCurr << ", xCurrMedian: " << median(xCurr) << endl; 
 
     float xdistPrev = median(xPrev);
     float xdistCurr = median(xCurr);
 
-    cout << "Pointcloud size: prev: " << lidarPointsPrev.size() << ", " << counterPrev << ", curr: " << lidarPointsCurr.size() << ", " << counterCurr << endl;
-    cout <<  "xdistPrev: " << xdistPrev << ", xdistCurr: " << xdistCurr << ", deltaD: " << xdistPrev - xdistCurr << endl;
+    // cout << "Pointcloud size: prev: " << lidarPointsPrev.size() << ", " << counterPrev << ", curr: " << lidarPointsCurr.size() << ", " << counterCurr << endl;
+    // cout <<  "xdistPrev: " << xdistPrev << ", xdistCurr: " << xdistCurr << ", deltaD: " << xdistPrev - xdistCurr << endl;
     float velocityCurr = (xdistPrev - xdistCurr) * frameRate;
     TTC = xminCurr / velocityCurr;
-    cout << "xdistCurr: " << xdistCurr << ", velocityCurr: " << velocityCurr << ", TTC: " << TTC << endl;
+    // cout << "xdistCurr: " << xdistCurr << ", velocityCurr: " << velocityCurr << ", TTC: " << TTC << endl;
 
     // vector<float> distRatios;
     // double meanDistRatio = std::accumulate()
@@ -384,7 +385,7 @@ void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bb
         }
     }
 
-    std::cout << "bbBestMatches size: " << bbBestMatches.size() << std::endl;
+    // std::cout << "bbBestMatches size: " << bbBestMatches.size() << std::endl;
 
     // // Print matched ROIs
     // for(auto itBB = bbBestMatches.begin(); itBB != bbBestMatches.end(); ++itBB)
