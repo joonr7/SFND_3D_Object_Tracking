@@ -33,7 +33,7 @@ int main(int argc, const char *argv[])
     string descriptorType2 = "DES_BINARY"; // DES_BINARY, DES_HOG
     string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
     
-    std::vector<string> detectorTypeList    {"SHITOMASSI", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE", "SIFT"};
+    std::vector<string> detectorTypeList    {"SHITOMASI", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE", "SIFT"};
     std::vector<string> descriptorTypeList  {"BRISK", "BRIEF", "ORB", "FREAK", "AKAZE", "SITF"};
     std::vector<string> matcherTypeList     {"MAT_BF", "MAT_FLANN"};
     
@@ -47,6 +47,15 @@ int main(int argc, const char *argv[])
         else
         {
             cout << "Err: (detector, descriptor) type error" <<endl;
+            cout << "Detector list: ";
+            for(int it = 0; it<detectorTypeList.size(); it++)
+                cout << detectorTypeList[it] << ", ";
+            cout << endl;
+            
+            cout << "Descriptor list: ";
+            for(int it = 0; it < descriptorTypeList.size(); it++)
+                cout << descriptorTypeList[it] <<", ";
+            cout << endl;
             exit(1);
         }
     }
@@ -62,6 +71,15 @@ int main(int argc, const char *argv[])
         else
         {
             cout << "Err: (detector, descriptor, matcher) type error" <<endl;
+            cout << "Detector list: ";
+            for(int it = 0; it<detectorTypeList.size(); it++)
+                cout << detectorTypeList[it] << ", ";
+            cout << endl;
+            
+            cout << "Descriptor list: ";
+            for(int it = 0; it < descriptorTypeList.size(); it++)
+                cout << descriptorTypeList[it] <<", ";
+            cout << endl;
             exit(1);
         }
     }
@@ -80,7 +98,7 @@ int main(int argc, const char *argv[])
     string imgPrefix = "KITTI/2011_09_26/image_02/data/000000"; // left camera, color
     string imgFileType = ".png";
     int imgStartIndex = 0; // first file index to load (assumes Lidar and camera names have identical naming convention)
-    int imgEndIndex = 18;   // last file index to load
+    int imgEndIndex = 77;   // last file index to load
     int imgStepWidth = 1; 
     int imgFillWidth = 4;  // no. of digits which make up the file index (e.g. img-0001.png)
 
@@ -212,7 +230,7 @@ int main(int argc, const char *argv[])
         }
 
         // only keep keypoints on the preceding vehicle
-        bool bFocusOnVehicle = false;
+        bool bFocusOnVehicle = true;
         cv::Rect vehicleRect(535, 180, 180, 150);
         if (bFocusOnVehicle)
         {
@@ -294,7 +312,10 @@ int main(int argc, const char *argv[])
                                 vector<char>(), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
 
                 string windowName = "Matching keypoints between two camera images";
-                cv::namedWindow(windowName, 7);
+                // cv::WINDOW_NORMAL(0) cv::WINDOW_AUTOSIZE(1) cv::WINDOW_OPENGL (4096) 
+                // cv::WINDOW_FULLSCREEN (1) cv::WINDOW_FREERATIO(256) cv::WINDOW_KEEPRATIO(0) 
+                // cv::WINDOW_GUI_EXPANDED(0) cv:: WINDOW_GUI_NORMAL(16)
+                cv::namedWindow(windowName, cv::WINDOW_AUTOSIZE);
                 cv::imshow(windowName, matchImg);
                 // cout << "Press key to continue to next image" << endl;
                 // cv::waitKey(0); // wait for key to be pressed
@@ -369,14 +390,14 @@ int main(int argc, const char *argv[])
                         cv::rectangle(visImg, cv::Point(currBB->roi.x, currBB->roi.y), cv::Point(currBB->roi.x + currBB->roi.width, currBB->roi.y + currBB->roi.height), cv::Scalar(0, 255, 0), 2);
                         
                         char str[200];
-                        sprintf(str, "TTC Lidar : %f s, TTC Camera : %f s", ttcLidar, ttcCamera);
+                        sprintf(str, "Image #: %zu, TTC Lidar : %f s, TTC Camera : %f s", imgIndex, ttcLidar, ttcCamera);
                         putText(visImg, str, cv::Point2f(80, 50), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0,0,255));
 
                         string windowName = "Final Results : TTC";
-                        cv::namedWindow(windowName, 4);
+                        cv::namedWindow(windowName, 1);
                         cv::imshow(windowName, visImg);
                         cout << "Press key to continue to next frame" << endl;
-                        // cv::waitKey(0);
+                        cv::waitKey(0);
                     }
                     bVis = false;
 
