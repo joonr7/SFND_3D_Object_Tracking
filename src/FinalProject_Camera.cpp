@@ -34,7 +34,7 @@ int main(int argc, const char *argv[])
     string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
     
     std::vector<string> detectorTypeList    {"SHITOMASI", "HARRIS", "FAST", "BRISK", "ORB", "AKAZE", "SIFT"};
-    std::vector<string> descriptorTypeList  {"BRISK", "BRIEF", "ORB", "FREAK", "AKAZE", "SITF"};
+    std::vector<string> descriptorTypeList  {"BRISK", "BRIEF", "ORB", "FREAK", "AKAZE", "SIFT"};
     std::vector<string> matcherTypeList     {"MAT_BF", "MAT_FLANN"};
     
     if (argc == 3){
@@ -80,6 +80,12 @@ int main(int argc, const char *argv[])
             for(int it = 0; it < descriptorTypeList.size(); it++)
                 cout << descriptorTypeList[it] <<", ";
             cout << endl;
+
+            cout << "Matcher list: ";
+            for(int it = 0; it < matcherTypeList.size(); it++)
+                cout << matcherTypeList[it] <<", ";
+            cout << endl;
+
             exit(1);
         }
     }
