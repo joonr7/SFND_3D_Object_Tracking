@@ -236,7 +236,7 @@ int main(int argc, const char *argv[])
         }
 
         // only keep keypoints on the preceding vehicle
-        bool bFocusOnVehicle = true;
+        bool bFocusOnVehicle = false;
         cv::Rect vehicleRect(535, 180, 180, 150);
         if (bFocusOnVehicle)
         {
@@ -384,11 +384,34 @@ int main(int argc, const char *argv[])
                     //// TASK FP.4 -> compute time-to-collision based on camera (implement -> computeTTCCamera)
                     double ttcCamera;
                     clusterKptMatchesWithROI(*currBB, (dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->kptMatches);                    
+                    
+                    // visualize matches between current and previous image
+                    bVis = true;
+                    if (bVis)
+                    {
+                        cv::Mat matchImg = ((dataBuffer.end() - 1)->cameraImg).clone();
+                        cv::drawMatches((dataBuffer.end() - 2)->cameraImg, (dataBuffer.end() - 2)->keypoints,
+                                        (dataBuffer.end() - 1)->cameraImg, (dataBuffer.end() - 1)->keypoints,
+                                        currBB->kptMatches, matchImg,
+                                        cv::Scalar::all(-1), cv::Scalar::all(-1),
+                                        vector<char>(), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+
+                        string windowName = "Matching keypoints between two camera images";
+                        // cv::WINDOW_NORMAL(0) cv::WINDOW_AUTOSIZE(1) cv::WINDOW_OPENGL (4096) 
+                        // cv::WINDOW_FULLSCREEN (1) cv::WINDOW_FREERATIO(256) cv::WINDOW_KEEPRATIO(0) 
+                        // cv::WINDOW_GUI_EXPANDED(0) cv:: WINDOW_GUI_NORMAL(16)
+                        cv::namedWindow(windowName, cv::WINDOW_AUTOSIZE);
+                        cv::imshow(windowName, matchImg);
+                        // cout << "Press key to continue to next image" << endl;
+                        // cv::waitKey(0); // wait for key to be pressed
+                    }
+                    bVis = false;
+                    
                     computeTTCCamera((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera);
                     cameraOut << ttcCamera << endl;
                     //// EOF STUDENT ASSIGNMENT
 
-                    bVis = false;
+                    bVis = true;
                     if (bVis)
                     {
                         cv::Mat visImg = (dataBuffer.end() - 1)->cameraImg.clone();
