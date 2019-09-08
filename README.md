@@ -45,4 +45,7 @@ The file 'yolov3.cfg' containing the network configuration is available [here](h
 
 1. Make a build directory in the top level project directory: `mkdir build && cd build`
 2. Compile: `cmake .. && make`
-3. Run it: `./3D_object_tracking`.
+3. Run it: `./3D_object_tracking`, `./3D_object_tracking FAST BRIEF`, or `./3D_object_tracking FAST BRIEF MAT_BF` etc. 
+
+
+
