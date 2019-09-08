@@ -209,6 +209,7 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 
             if (distPrev > std::numeric_limits<double>::epsilon() && distCurr >= minDist)
             { // avoid division by zero
+                // cout << "(camera)distCurr: " << distCurr << ", distPrev: " << distPrev << endl;
 
                 double distRatio = distCurr / distPrev;
                 distRatios.push_back(distRatio);
@@ -236,7 +237,7 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
     // solution by joonyoung
     double medianDistRatio = median(distRatios);
     TTC = -dT / (1 - medianDistRatio);
-    // cout << "dT: " << dT << ", 1-meanDistRatio: " << 1-meanDistRatio << ", 1-medianDistRatio: " <<  1-medianDistRatio <<endl;
+    // cout << "dT: " << dT << ", 1-medianDistRatio: " <<  1-medianDistRatio <<endl;
 
     // Solution below.
     // std::sort(distRatios.begin(), distRatios.end());
