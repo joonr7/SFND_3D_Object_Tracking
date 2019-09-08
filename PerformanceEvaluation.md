@@ -29,8 +29,8 @@ Lidar points on the preceding vehicle can be considered as a part of the truck o
 # FP.6 : Performance Evaluation 2
 
 Looking at the following table and the graph, SIFT-SIFT is the closest graph to the LiDAR TTC graph.<br>
-However, BRIEF descriptor is much more faster than SIFT descriptor.<br>
-So, I took the **SIFT-BRIE** as the best detector / descriptor combinations.
+However, BRIEF descriptor is much more faster than SIFT descriptor. (time data: [joonr7/SFND_2D_Feature_Tracking#Result](https://github.com/joonr7/SFND_2D_Feature_Tracking#result))<br>
+So, I took the **SIFT-BRIEF** as the best detector / descriptor combinations.
 Ave.(diff) = AVERAGE( (lidar tcc - )^2 ) from image 1 to image 50.<br><br>
 <img src="images/fp6_rank.png" width="490" height="800" /> <br>
 
